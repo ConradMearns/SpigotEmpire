@@ -1,0 +1,7 @@
+name: Empire
+main: com.estrayer.empire.EmpirePlugin
+version: 1.0.0
+commands:
+  dev:
+    decription: Toggle developer mode.
+    usage: /dev
