@@ -13,17 +13,29 @@ import com.estrayer.empire.BuildingManager.Structure;
 
 public class CommandDev implements CommandExecutor{
 	
+	/**Reference to the plugin so we have access to other methods
+	 */
 	EmpirePlugin plugin;
 	
-	private Location pos1;
-	private Location pos2;
+	/**Used for capturing positions with /dev pos1 and /dev pos2
+	 */
+	private Location pos1, pos2;
 	
-	private boolean testCommandEnabled = true;
+	/**This is a programmer defined boolean that should be set to false for releases
+	 */
+	private final boolean testCommandEnabled = true;
 	
+	/**
+	 * Construct this class from EmpirePlugin
+	 * @param plugin
+	 */
 	public CommandDev(EmpirePlugin plugin){
 		this.plugin = plugin;
 	}
 	
+	/**
+	 * Break apart all possible uses for the /dev command into seperat functions/methods
+	 */
 	@Override
 	public boolean onCommand(CommandSender sender, Command arg1, String arg2, String[] args) {
 		if(sender instanceof Player){
@@ -70,7 +82,7 @@ public class CommandDev implements CommandExecutor{
 								player.sendMessage("You must select two positions first,");
 								player.sendMessage("Use [/dev pos1] and [/dev pos2].");
 							}else{
-								plugin.buildingManager.saveStructureBetween(pos1, pos2, args[1]);
+								plugin.buildingManager.saveStructure(pos1, pos2, args[1]);
 								
 								player.sendMessage("Saving structure "+args[1]+" from");
 								player.sendMessage(pos1.getBlockX()+", "+pos1.getBlockY()+", "+pos1.getBlockZ()

@@ -15,15 +15,34 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 public class BuildingManager {
 	
+	/**
+	 * Reference to the plugin so we have access to other methods
+	 */
 	EmpirePlugin plugin;
 	
+	/**
+	 * Stores file location prefix
+	 */
 	private String prefix;
+	
+	/**
+	 * Where the sctructures config is saved and accessed from
+	 */
 	private File structuresFile;
+	
+	/**
+	 * This is the sctructures config that stores metadata about where buildings have been placed
+	 */
 	public FileConfiguration structures;
 	
+	/**
+	 * Initialize this class
+	 * @param plugin is to set the global reference variable
+	 */
 	public BuildingManager(EmpirePlugin plugin){
 		this.plugin = plugin;
 		
+		//Init prefix
 		prefix = plugin.getConfig().getString("settings.structures.prefix");
 		
 		//Init configuration
@@ -32,92 +51,53 @@ public class BuildingManager {
 		
 	}
 	
-	public ArrayList<Block> getBuildingArray(String name){
-		
-		plugin.getLogger().info("Loading "+name);
-		
-		File configFile;
-		FileConfiguration config;
-		
-		String filepath = prefix + plugin.getConfig().getString("settings.structures."+name);
-		
-		configFile = new File(plugin.getDataFolder(), filepath);
-		config = YamlConfiguration.loadConfiguration(configFile);
-		
-		try {
-			config.save(configFile);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		int originX = config.getInt("origin.x");
-		int originZ = config.getInt("origin.z");
-		int originY = config.getInt("origin.y");
-		//int radius = config.getInt("radius");
-		
-		ArrayList<Block> blocks = new ArrayList<Block>();
-		
-		for(String key : config.getConfigurationSection("blocks").getKeys(false)){
-			
-			//plugin.getLogger().info(key);
-			
-			key = "blocks."+key;
-			
-			Block block = new Block();			
-			block.x = config.getInt(key+".x") - originX;
-			block.y = config.getInt(key+".y") - originY;
-			block.z = config.getInt(key+".z") - originZ;
-			block.id = config.getInt(key+".id");
-			block.data = (byte)config.getInt(key+".data");
-			
-			blocks.add(block);
-		}
-		
-		return blocks;
-	}
-	
-	public Structure getStructureInfo(String name){
-		
-		String filepath = prefix + plugin.getConfig().getString("settings.structures."+name);
-		
-		File configFile;
-		FileConfiguration config;
-		
-		configFile = new File(plugin.getDataFolder(), filepath);
-		config = YamlConfiguration.loadConfiguration(configFile);
-		
-		try {
-			config.save(configFile);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		Structure struct = new Structure();
-		
-		struct.x_size = config.getInt("origin.x");
-		struct.z_size = config.getInt("origin.z");
-		struct.radius = config.getInt("radius");
-		
-		return struct;
-	}
-	
-	//Build
+	/**
+	 * Build a structure into the world
+	 * @param p who wants to build
+	 * @param name of structure template
+	 * @param loc of structure placement
+	 */
 	public void build(Player p, String name, Location loc){
 		this.build(p, name, loc, 0);
 	}
 	
+	/**
+	 * Build a structure into the world
+	 * @param p who wants to build
+	 * @param name of structure template
+	 * @param loc of structure placement
+	 * @param speed of block by block placement
+	 */
 	public void build(Player p, String name, Location loc, int speed){
 		this.build(p, name, loc, speed, false);
 	}
+	
+	/**
+	 * Build a structure into the world
+	 * @param p who wants to build
+	 * @param name of structure template
+	 * @param loc of structure placement
+	 * @param speed of block by block placement
+	 * @param sound to toggle sound effects
+	 */
 	public void build(Player p, String name, Location loc, int speed, boolean sound){
+		//Create an array of blocks
+		ArrayList<Block> blocks = getStructureBlockMeta(name);
 		
-		ArrayList<Block> blocks = getBuildingArray(name);
-		Structure struct = getStructureInfo(name);
+		//Grab structure metadata and init values
+		Structure struct = getStructureMeta(name);
+		struct.type = name;
+		struct.x_loc = loc.getBlockX();
+		struct.z_loc = loc.getBlockZ();
+		struct.y_loc = loc.getBlockY();
 		
+		//Shuffle the array so the blocks are added with a random effect
 		Collections.shuffle(blocks);
 		
+		//Debug info
 		plugin.getLogger().info("Built structure at "+blocks.get(0).x + ", " +blocks.get(0).y + ", "+blocks.get(0).z + ", ");
 		
+		//Loop through ever block and create an asynchronous task to build block by block
 		int index = 0;
 		for(Block b : blocks){
 			index++;
@@ -135,75 +115,39 @@ public class BuildingManager {
 			
 		}
 		
-		//The building was built!
-		struct.type = name;
-		struct.x_loc = loc.getBlockX();
-		struct.z_loc = loc.getBlockZ();
-		struct.y_loc = loc.getBlockY();
-		saveStructureConfig(struct, p);
+		//Save the structure
+		saveStructureMeta(struct, p);
 		
 	}
 	
-	public void saveStructureConfig(Structure struct, Player p){
-		//Grab list of all buildings
-		@SuppressWarnings("unchecked")
-		ArrayList<String> buildings = (ArrayList<String>) structures.getList(p.getDisplayName());
-		
-		if(buildings == null){
-			buildings = new ArrayList<String>();
-		}
-		
-		buildings.add(struct.toString());
-		structures.set(p.getDisplayName(), buildings);
-		try {
-			structures.save(structuresFile);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	/**
+	 * Place a block at position x,y,z and initialize it's id and data
+	 * @param id
+	 * @param data
+	 * @param x
+	 * @param y
+	 * @param z
+	 */
+	@SuppressWarnings("deprecation")
+	public void placeBlock(int id, byte data, int x, int y, int z){
+		plugin.world.getBlockAt(x, y, z).setTypeId(id);
+		plugin.world.getBlockAt(x, y, z).setData(data);
 	}
-	
-	//Warning! Y-value in location is used for radius!
-	public void saveToFile(ArrayList<Block> blocks, String name, Location location){
-		
-		String filepath = prefix + plugin.getConfig().getString("settings.structures."+name);
-		
-		plugin.getLogger().info("Saving "+blocks.size()+" block to "+filepath);
-		
-		File configFile;
-		FileConfiguration config;
-		
-		configFile = new File(plugin.getDataFolder(), filepath);
-		config = YamlConfiguration.loadConfiguration(configFile);
-		
-		//Save a default value for an origin offset and radius
-		config.set("radius", location.getBlockY());
-		config.set("origin.x", location.getBlockX());
-		config.set("origin.y", 0);
-		config.set("origin.z", location.getBlockZ());
-		
-		for(int i=0; i < blocks.size(); i++){
-			String prefix = "blocks.a"+i+".";
-			
-			config.set(prefix+"x", blocks.get(i).x);
-			config.set(prefix+"y", blocks.get(i).y);
-			config.set(prefix+"z", blocks.get(i).z);
-			
-			config.set(prefix+"id", blocks.get(i).id);
-			config.set(prefix+"data", blocks.get(i).data);
-		}
-		
-		try {
-			config.save(configFile);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
+
+	/**
+	 * Get a list of structures that an emprie has built
+	 * @param empire - The name of the player who has buildings
+	 * @return an array of Structure metadata
+	 */
 	public ArrayList<Structure> getEmpireStructureList(String empire){
+		//Init an empty list
 		ArrayList<Structure> structureList = new ArrayList<Structure>();
 		
+		//Init and set a list of structures as strings
 		@SuppressWarnings("unchecked")
 		ArrayList<String> stringList = (ArrayList<String>) plugin.buildingManager.structures.get(empire);
+		
+		//Loop through every structure string and convert it into meta. Save that meta
 		for(String string : stringList){
 			Structure structure = new Structure();
 			structure.setFromString(string);
@@ -214,8 +158,14 @@ public class BuildingManager {
 		return structureList;
 	}
 	
+	/**
+	 * Save a structure template given a position
+	 * @param pos1 - The first grabbed world position
+	 * @param pos2 - The second grabbed world position
+	 * @param name - The name of this structure template
+	 */
 	@SuppressWarnings("deprecation")
-	public void saveStructureBetween(Location pos1, Location pos2, String name) {
+	public void saveStructure(Location pos1, Location pos2, String name) {
 		//Find difference between pos1 and pos2 and save as int values
 		int x,y,z;
 		int lgX,lgY,lgZ;
@@ -281,15 +231,164 @@ public class BuildingManager {
 			}
 		}
 		//We now have an ArrayList of blocks, pass this to a config saving method
-		saveToFile(blocks, name, offsetRadius);
-	}
-
-	@SuppressWarnings("deprecation")
-	public void placeBlock(int id, byte data, int x, int y, int z){
-		plugin.world.getBlockAt(x, y, z).setTypeId(id);
-		plugin.world.getBlockAt(x, y, z).setData(data);
+		saveStructureBlockMeta(blocks, name, offsetRadius);
 	}
 	
+	/**
+	 * Save MetaData of a newly built structure
+	 * @param structure metadata that has been built
+	 * @param player that has built the structure
+	 */
+	public void saveStructureMeta(Structure structure, Player player){
+		//Grab list of all buildings as strings
+		@SuppressWarnings("unchecked")
+		ArrayList<String> buildings = (ArrayList<String>) structures.getList(player.getDisplayName());
+		
+		//If this list is null, we need to initiate it so we can start adding content
+		if(buildings == null){
+			buildings = new ArrayList<String>();
+		}
+		
+		//Serialize our structure into a string and add it to the list
+		buildings.add(structure.toString());
+		
+		//Overwrite the structures config entry to include our new building
+		structures.set(player.getDisplayName(), buildings);
+		
+		//Try to save
+		try {
+			structures.save(structuresFile);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Acquire metadata from a structure template
+	 * @param name is the name of a structure, where the location is defined by main config entry 
+	 * @return the metadata as a Structure
+	 */
+	public Structure getStructureMeta(String name){
+		//Construct a filepath based on the main config entry for 'name'
+		String filepath = prefix + plugin.getConfig().getString("settings.structures."+name);
+		
+		//Create a file and config for this structure
+		File configFile;
+		FileConfiguration config;
+		
+		//Init configFile and config so that we can access them
+		configFile = new File(plugin.getDataFolder(), filepath);
+		config = YamlConfiguration.loadConfiguration(configFile);
+		
+		//Init a new Structure
+		Structure struct = new Structure();
+		
+		//Init individual variables with the Structure
+		struct.x_size = config.getInt("origin.x");
+		struct.z_size = config.getInt("origin.z");
+		struct.radius = config.getInt("radius");
+		
+		return struct;
+	}
+
+	/**
+	 * After collecting an array of blocks, serialize them into a new file
+	 * @param blocks - list of blocks to save
+	 * @param name - the name under the main config that points to where to save
+	 * @param origin - Used to store origin information. The Y value is used to store a radius
+	 */
+	public void saveStructureBlockMeta(ArrayList<Block> blocks, String name, Location origin){
+		//Warning! Y-value in location is used for radius!
+		String filepath = prefix + plugin.getConfig().getString("settings.structures."+name);
+		
+		plugin.getLogger().info("Saving "+blocks.size()+" block to "+filepath);
+		
+		File configFile;
+		FileConfiguration config;
+		
+		configFile = new File(plugin.getDataFolder(), filepath);
+		config = YamlConfiguration.loadConfiguration(configFile);
+		
+		//Save a default value for an origin offset and radius
+		config.set("radius", origin.getBlockY());
+		config.set("origin.x", origin.getBlockX());
+		config.set("origin.y", 0);
+		config.set("origin.z", origin.getBlockZ());
+		
+		//Loop through every block and save it's information to this temp config
+		for(int i=0; i < blocks.size(); i++){
+			String prefix = "blocks.a"+i+".";
+			
+			config.set(prefix+"x", blocks.get(i).x);
+			config.set(prefix+"y", blocks.get(i).y);
+			config.set(prefix+"z", blocks.get(i).z);
+			
+			config.set(prefix+"id", blocks.get(i).id);
+			config.set(prefix+"data", blocks.get(i).data);
+		}
+		
+		//Try to save the structure template		
+		try {
+			config.save(configFile);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * This loads a structure template as a YAML config and contructs an ArrayList
+	 * @param name is the name of a structure, where the location is defined by main config entry
+	 * @return the list of blocks for the 'name' structure
+	 */
+	public ArrayList<Block> getStructureBlockMeta(String name){
+		//Debug info
+		plugin.getLogger().info("Loading "+name);
+		
+		//Create a file and config for this structure
+		File configFile;
+		FileConfiguration config;
+		
+		//Construct a filepath based on the main config entry for 'name'
+		String filepath = prefix + plugin.getConfig().getString("settings.structures."+name);
+		
+		//Init configFile and config so that we can access them
+		configFile = new File(plugin.getDataFolder(), filepath);
+		config = YamlConfiguration.loadConfiguration(configFile);
+		
+		//Grab the origin offset information from the structure
+		int originX = config.getInt("origin.x");
+		int originZ = config.getInt("origin.z");
+		int originY = config.getInt("origin.y");
+		
+		//Create and init a list of blocks
+		ArrayList<Block> blocks = new ArrayList<Block>();
+		
+		//Loop through every block under the blocks kay
+		for(String key : config.getConfigurationSection("blocks").getKeys(false)){
+			
+			//Define a prefix for the exact block location
+			key = "blocks."+key;
+			
+			//Create and init a new block based on its saved location and the offset origin
+			Block block = new Block();			
+			block.x = config.getInt(key+".x") - originX;
+			block.y = config.getInt(key+".y") - originY;
+			block.z = config.getInt(key+".z") - originZ;
+			block.id = config.getInt(key+".id");
+			block.data = (byte)config.getInt(key+".data");
+			
+			//Add this new block to the blocks list
+			blocks.add(block);
+		}
+		
+		return blocks;
+	}
+
+	/**
+	 * Structure class to define structure metadata and methods to store as and retrieve from Strings
+	 * @author Conrad
+	 *
+	 */
 	public class Structure{
 		public int x_size,z_size;
 		public int x_loc, y_loc, z_loc;
@@ -314,6 +413,11 @@ public class BuildingManager {
 		
 	}
 	
+	/**
+	 * Simple block class to allow for ArrayLists of blocks
+	 * @author Conrad
+	 *
+	 */
 	public class Block{
 		public int id;
 		public byte data;

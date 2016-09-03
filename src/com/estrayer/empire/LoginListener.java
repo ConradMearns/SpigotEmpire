@@ -13,8 +13,12 @@ public final class LoginListener implements Listener{
 		this.plugin = plugin;
 	}
 	
+	/**
+	 * Whenever a player joins for the first time, initialize an empire
+	 * @param event - PlayerJoinEvent
+	 */
 	@EventHandler
-	public void loginHandler(PlayerJoinEvent event){
+	public void newLoginListener(PlayerJoinEvent event){
 		//Test to see if that player has ever joined before
 		
 		//Retrieve player name
