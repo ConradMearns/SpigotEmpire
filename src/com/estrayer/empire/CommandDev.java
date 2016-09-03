@@ -82,7 +82,7 @@ public class CommandDev implements CommandExecutor{
 								player.sendMessage("You must select two positions first,");
 								player.sendMessage("Use [/dev pos1] and [/dev pos2].");
 							}else{
-								plugin.buildingManager.saveStructureBetween(pos1, pos2, args[1]);
+								plugin.buildingManager.saveStructure(pos1, pos2, args[1]);
 								
 								player.sendMessage("Saving structure "+args[1]+" from");
 								player.sendMessage(pos1.getBlockX()+", "+pos1.getBlockY()+", "+pos1.getBlockZ()
