@@ -1,11 +1,15 @@
 package com.estrayer.empire;
 
+import java.util.ArrayList;
+
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
+
+import com.estrayer.empire.BuildingManager.Structure;
 
 public class CommandDev implements CommandExecutor{
 	
@@ -42,7 +46,7 @@ public class CommandDev implements CommandExecutor{
 							player.sendMessage("Configuration loaded");
 						}
 						if(args[0].equalsIgnoreCase("test") && testCommandEnabled){
-							plugin.buildingManager.buildOverTime(BuildingManager.HOUSE, player.getLocation(), 1);
+							//plugin.buildingManager.build(player, BuildingManager.HOUSE, player.getLocation(), 1);
 							player.sendMessage("Test executed");
 						}
 						
@@ -58,32 +62,45 @@ public class CommandDev implements CommandExecutor{
 					}else if(args.length == 2){
 						//Builds
 						if(args[0].equalsIgnoreCase("build")){
-							String prefix = plugin.getConfig().getString("settings.structures.prefix");
-							String fileLocation = prefix + args[1] + ".yml";
-							plugin.buildingManager.buildInstantly(fileLocation, player.getLocation());
+							plugin.buildingManager.build(player, args[1], player.getLocation(), 2);
 						}
 						
 						if(args[0].equalsIgnoreCase("save")){
-							String prefix = plugin.getConfig().getString("settings.structures.prefix");
-							String fileLocation = prefix + args[1] + ".yml";
 							if(pos1 == null || pos2 == null){
 								player.sendMessage("You must select two positions first,");
 								player.sendMessage("Use [/dev pos1] and [/dev pos2].");
 							}else{
-								plugin.buildingManager.saveStructureBetween(pos1, pos2, fileLocation);
+								plugin.buildingManager.saveStructureBetween(pos1, pos2, args[1]);
 								
-								player.sendMessage("Saveing structure "+args[1]+".yml from");
+								player.sendMessage("Saving structure "+args[1]+" from");
 								player.sendMessage(pos1.getBlockX()+", "+pos1.getBlockY()+", "+pos1.getBlockZ()
 								+" to " + pos2.getBlockX()+", "+pos2.getBlockY()+", "+pos2.getBlockZ());
 							}
 						}
-						
+						//Teleport
 						if(args[0].equalsIgnoreCase("tp")){
 							if(plugin.getConfig().contains("empires."+args[1])){
 								Location tp = player.getLocation();
 								tp.setX(plugin.getConfig().getInt("empires."+args[1]+".location.x"));
 								tp.setZ(plugin.getConfig().getInt("empires."+args[1]+".location.y"));
 								player.teleport(tp);
+							}else{
+								player.sendMessage("Player not found in config. Did you include captials?");
+							}
+						}
+						//Get a summary of all buildings a player has
+						if(args[0].equalsIgnoreCase("buildings")){
+							if(plugin.buildingManager.structures.contains(args[1])){
+								String allBuildings = args[1]+"'s buildings: ";
+								@SuppressWarnings("unchecked")
+								ArrayList<BuildingManager.Structure> list = (ArrayList<Structure>) plugin.buildingManager.structures.get(args[1]);
+								list = plugin.buildingManager.getEmpireStructureList(args[1]);
+								for(Structure s : list){
+									allBuildings += s.type+", ";
+								}
+								player.sendMessage(allBuildings);
+							}else{
+								player.sendMessage("Player not found in config. Did you include captials?");
 							}
 						}
 					}

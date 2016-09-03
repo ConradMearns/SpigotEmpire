@@ -40,10 +40,11 @@ Using either Spigot or Bukkit as a backend, develop a plugin using pre-determine
 * Alternate building styles
 
 ### Feature Implementation
-* Asynchronous block placement
+* ~~Asynchronous block placement~~
 * Structures
-  * Structure files define boundaries and test placement
-  * Individual structure origins are stored in empire-specific file
+  * Structure files test placement
+  * ~~Structure files define boundaries~~
+  * ~~Individual structure origins are stored in empire-specific file~~
   * ~~Stop saving air~~
   * ~~Structures have origin offset and a radius defined in the file~~
   * ~~Load blocks and data from yml~~
