@@ -62,3 +62,4 @@ bin/plugin.yml
 src/Build.xml
 bin/Build.xml
 >>>>>>> origin/master
+.externalToolBuilders/New_Builder.launch

@@ -13,48 +13,69 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class EmpirePlugin extends JavaPlugin{
 	
+	/** Used for information services, like informing a player what the server name is
+	 */
 	public String SERVER_NAME;
+	
+	/** The server's main world
+	 */
 	public World world;
 	
+	/** Access to building related methods
+	 */
 	public BuildingManager buildingManager;
 	
+	/**
+	 * Called when Spigot starts, initializes global variables
+	 */
 	@Override
 	public void onEnable(){
+		//Init world
 		world = this.getServer().getWorlds().get(0);
-		//Load configuration
+		
+		//Load configuration and global settings
 		loadConfiguration();
 		SERVER_NAME = getConfig().getString("settings.server_name");
+		buildingManager = new BuildingManager(this);
 		
-		//Listeners
+		//Init Listeners
 		getServer().getPluginManager().registerEvents(new LoginListener(this), this);
 		
-		//Commands
+		//Init Commands Executors
 		getCommand("dev").setExecutor(new CommandDev(this));
-		
-		buildingManager = new BuildingManager(this);
 	}
 	
+	/**Save our config files before we exit
+	 */
 	@Override
 	public void onDisable(){
+		//Save config file
 		saveConfig();
-		//TODO Save structures
+		//Save structures
+		//TODO
 	}
-
+	
+	/**Load the settings configuration and add default settings if they don't already exist
+	 */
 	public void loadConfiguration(){
 		//Set default values, then use if needed
+		//Starting resources for new players
 		getConfig().addDefault("settings.resources.wood", 256);
 		getConfig().addDefault("settings.resources.food", 32);
 		getConfig().addDefault("settings.resources.stone", 0);
 		getConfig().addDefault("settings.resources.iron", 0);
 		getConfig().addDefault("settings.resources.gold", 0);
 		
+		//Information about how new players are added
 		getConfig().addDefault("settings.server_name", "Devland");
 		getConfig().addDefault("settings.spawn.radius", 160);
 		getConfig().addDefault("settings.spawn.increment.min", 80);
 		getConfig().addDefault("settings.spawn.increment.max", 480);
 		
+		//Dev list, players in this list have access to dev commands
 		getConfig().addDefault("settings.devlist.Player", true);
 		
+		//Structure save locations
 		getConfig().addDefault("settings.structures.prefix", "structures"+File.separatorChar);
 		getConfig().addDefault("settings.structures.house", "house.yml");
 		getConfig().addDefault("settings.structures.town_center", "town_center.yml");
@@ -62,44 +83,61 @@ public class EmpirePlugin extends JavaPlugin{
 		getConfig().addDefault("settings.structures.university", "university.yml");
 		getConfig().addDefault("settings.structures.farm", "farm.yml");
 		getConfig().addDefault("settings.structures.mill", "mill.yml");
+		
 		//Copy defaults, save
 		getConfig().options().copyDefaults(true);
 		saveConfig();
 	}
-
+	
+	/** Set starting values for a new player and preform other init tasks
+	 * @param player is the new player that we need to give an empire
+	 */
 	public void initializeNewPlayer(Player player) {	
+		//This string defines where information for th eplayer exists
 		String confLoc = "empires."+player.getDisplayName();
-
+		
+		//Print debug info
 		getLogger().info("Making a new player empire for "+player.getDisplayName());
 		
 		//Greet player
 		player.sendMessage("Welcome to "+SERVER_NAME+", Lord "+player.getDisplayName());
+		
 		//Initialize resources
-		//Gather resources as vars
 		int resWood = getConfig().getInt("settings.resources.wood");
 		int resFood = getConfig().getInt("settings.resources.food");
 		int resStone= getConfig().getInt("settings.resources.stone");
 		int resIron = getConfig().getInt("settings.resources.iron");
 		int resGold = getConfig().getInt("settings.resources.gold");
+
+		//Gather resources as vars
 		getConfig().set(confLoc+".resources.wood", resWood);
 		getConfig().set(confLoc+".resources.food", resFood);
 		getConfig().set(confLoc+".resources.stone", resStone);
 		getConfig().set(confLoc+".resources.iron", resIron);
 		getConfig().set(confLoc+".resources.gold", resGold);
+		
 		//Set to adventure mode
 		player.setGameMode(GameMode.ADVENTURE);
+		
 		//Teleport to starting location
 		Point position = findNewRandomLocation();
 		int height = player.getWorld().getHighestBlockYAt(position.x, position.y);
 		player.teleport(new Location(player.getWorld(), position.x, height, position.y));
 		getLogger().info("Sending "+player.getDisplayName()+" to X: "+position.x+", "+position.y);
+		
 		//Save that location
 		getConfig().set(confLoc+".location.x", position.x);
 		getConfig().set(confLoc+".location.y", position.y);
+		
 		//Build Town Center and starting capital
+		//TODO
 		
 	}
 	
+	/**Randomly finds a new location that is far enough away from other players
+	 * 
+	 * @return Point information, x and y are equal to Bukkit x and z
+	 */
 	public Point findNewRandomLocation(){
 		int minRadius = getConfig().getInt("settings.spawn.radius");
 		int minIncrement = getConfig().getInt("settings.spawn.increment.min");
