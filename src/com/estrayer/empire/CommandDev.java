@@ -13,17 +13,29 @@ import com.estrayer.empire.BuildingManager.Structure;
 
 public class CommandDev implements CommandExecutor{
 	
+	/**Reference to the plugin so we have access to other methods
+	 */
 	EmpirePlugin plugin;
 	
-	private Location pos1;
-	private Location pos2;
+	/**Used for capturing positions with /dev pos1 and /dev pos2
+	 */
+	private Location pos1, pos2;
 	
-	private boolean testCommandEnabled = true;
+	/**This is a programmer defined boolean that should be set to false for releases
+	 */
+	private final boolean testCommandEnabled = true;
 	
+	/**
+	 * Construct this class from EmpirePlugin
+	 * @param plugin
+	 */
 	public CommandDev(EmpirePlugin plugin){
 		this.plugin = plugin;
 	}
 	
+	/**
+	 * Break apart all possible uses for the /dev command into seperat functions/methods
+	 */
 	@Override
 	public boolean onCommand(CommandSender sender, Command arg1, String arg2, String[] args) {
 		if(sender instanceof Player){
