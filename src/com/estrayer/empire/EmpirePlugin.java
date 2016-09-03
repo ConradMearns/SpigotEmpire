@@ -27,7 +27,6 @@ public class EmpirePlugin extends JavaPlugin{
 		
 		//Listeners
 		getServer().getPluginManager().registerEvents(new LoginListener(this), this);
-		getServer().getPluginManager().registerEvents(new LivingEntityListener(), this);
 		
 		//Commands
 		getCommand("dev").setExecutor(new CommandDev(this));
@@ -38,6 +37,7 @@ public class EmpirePlugin extends JavaPlugin{
 	@Override
 	public void onDisable(){
 		saveConfig();
+		//TODO Save structures
 	}
 
 	public void loadConfiguration(){

@@ -3,34 +3,47 @@ package com.estrayer.empire;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import org.bukkit.Location;
+import org.bukkit.Sound;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
+
 
 public class BuildingManager {
 	
-	public static String HOUSE;
-	
 	EmpirePlugin plugin;
+	
+	private String prefix;
+	private File structuresFile;
+	public FileConfiguration structures;
 	
 	public BuildingManager(EmpirePlugin plugin){
 		this.plugin = plugin;
 		
-		String prefix = plugin.getConfig().getString("settings.structures.prefix");
+		prefix = plugin.getConfig().getString("settings.structures.prefix");
 		
-		BuildingManager.HOUSE = prefix + plugin.getConfig().getString("settings.structures.house");
+		//Init configuration
+		structuresFile = new File(plugin.getDataFolder(), "structures.yml");
+		structures = YamlConfiguration.loadConfiguration(structuresFile);
+		
 	}
 	
-	public ArrayList<Block> getArrayFromFile(String filepath){
+	public ArrayList<Block> getBuildingArray(String name){
 		
-		plugin.getLogger().info("Loading from "+filepath);
+		plugin.getLogger().info("Loading "+name);
 		
 		File configFile;
 		FileConfiguration config;
 		
+		String filepath = prefix + plugin.getConfig().getString("settings.structures."+name);
+		
 		configFile = new File(plugin.getDataFolder(), filepath);
 		config = YamlConfiguration.loadConfiguration(configFile);
+		
 		try {
 			config.save(configFile);
 		} catch (IOException e) {
@@ -40,7 +53,7 @@ public class BuildingManager {
 		int originX = config.getInt("origin.x");
 		int originZ = config.getInt("origin.z");
 		int originY = config.getInt("origin.y");
-		int radius = config.getInt("radius");
+		//int radius = config.getInt("radius");
 		
 		ArrayList<Block> blocks = new ArrayList<Block>();
 		
@@ -63,18 +76,96 @@ public class BuildingManager {
 		return blocks;
 	}
 	
-	public void buildInstantly(String filepath, Location loc){
-		ArrayList<Block> blocks = getArrayFromFile(filepath);
+	public Structure getStructureInfo(String name){
+		
+		String filepath = prefix + plugin.getConfig().getString("settings.structures."+name);
+		
+		File configFile;
+		FileConfiguration config;
+		
+		configFile = new File(plugin.getDataFolder(), filepath);
+		config = YamlConfiguration.loadConfiguration(configFile);
+		
+		try {
+			config.save(configFile);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		Structure struct = new Structure();
+		
+		struct.x_size = config.getInt("origin.x");
+		struct.z_size = config.getInt("origin.z");
+		struct.radius = config.getInt("radius");
+		
+		return struct;
+	}
+	
+	//Build
+	public void build(Player p, String name, Location loc){
+		this.build(p, name, loc, 0);
+	}
+	
+	public void build(Player p, String name, Location loc, int speed){
+		this.build(p, name, loc, speed, false);
+	}
+	public void build(Player p, String name, Location loc, int speed, boolean sound){
+		
+		ArrayList<Block> blocks = getBuildingArray(name);
+		Structure struct = getStructureInfo(name);
+		
+		Collections.shuffle(blocks);
 		
 		plugin.getLogger().info("Built structure at "+blocks.get(0).x + ", " +blocks.get(0).y + ", "+blocks.get(0).z + ", ");
 		
+		int index = 0;
 		for(Block b : blocks){
-			placeBlock(b.id, b.data, loc.getBlockX()+b.x, loc.getBlockY()+b.y, loc.getBlockZ()+b.z);
+			index++;
+			new BukkitRunnable() {
+		        
+	            @Override
+	            public void run() {
+	                placeBlock(b.id, b.data, loc.getBlockX()+b.x, loc.getBlockY()+b.y, loc.getBlockZ()+b.z);
+	                if(sound){
+	                	plugin.world.playSound(loc, Sound.BLOCK_STONE_PLACE, 1F, 1F);
+	                }
+	            }
+	            
+	        }.runTaskLater(this.plugin, speed*index);
+			
+		}
+		
+		//The building was built!
+		struct.type = name;
+		struct.x_loc = loc.getBlockX();
+		struct.z_loc = loc.getBlockZ();
+		struct.y_loc = loc.getBlockY();
+		saveStructureConfig(struct, p);
+		
+	}
+	
+	public void saveStructureConfig(Structure struct, Player p){
+		//Grab list of all buildings
+		@SuppressWarnings("unchecked")
+		ArrayList<String> buildings = (ArrayList<String>) structures.getList(p.getDisplayName());
+		
+		if(buildings == null){
+			buildings = new ArrayList<String>();
+		}
+		
+		buildings.add(struct.toString());
+		structures.set(p.getDisplayName(), buildings);
+		try {
+			structures.save(structuresFile);
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 	
 	//Warning! Y-value in location is used for radius!
-	public void saveToFile(ArrayList<Block> blocks, String filepath, Location location){
+	public void saveToFile(ArrayList<Block> blocks, String name, Location location){
+		
+		String filepath = prefix + plugin.getConfig().getString("settings.structures."+name);
 		
 		plugin.getLogger().info("Saving "+blocks.size()+" block to "+filepath);
 		
@@ -92,9 +183,11 @@ public class BuildingManager {
 		
 		for(int i=0; i < blocks.size(); i++){
 			String prefix = "blocks.a"+i+".";
+			
 			config.set(prefix+"x", blocks.get(i).x);
 			config.set(prefix+"y", blocks.get(i).y);
 			config.set(prefix+"z", blocks.get(i).z);
+			
 			config.set(prefix+"id", blocks.get(i).id);
 			config.set(prefix+"data", blocks.get(i).data);
 		}
@@ -105,9 +198,24 @@ public class BuildingManager {
 			e.printStackTrace();
 		}
 	}
-
+	
+	public ArrayList<Structure> getEmpireStructureList(String empire){
+		ArrayList<Structure> structureList = new ArrayList<Structure>();
+		
+		@SuppressWarnings("unchecked")
+		ArrayList<String> stringList = (ArrayList<String>) plugin.buildingManager.structures.get(empire);
+		for(String string : stringList){
+			Structure structure = new Structure();
+			structure.setFromString(string);
+			structureList.add(structure);
+			
+		}
+		
+		return structureList;
+	}
+	
 	@SuppressWarnings("deprecation")
-	public void saveStructureBetween(Location pos1, Location pos2, String fileLocation) {
+	public void saveStructureBetween(Location pos1, Location pos2, String name) {
 		//Find difference between pos1 and pos2 and save as int values
 		int x,y,z;
 		int lgX,lgY,lgZ;
@@ -155,9 +263,8 @@ public class BuildingManager {
 				for(int iz=z; iz <= lgZ; iz++){
 					//plugin.getLogger().info("ix: "+ix + " iy: "+iy+" iz: "+iz);
 					//plugin.getLogger().info("lgx: "+lgX + " lgy: "+lgY+" lgz: "+lgZ);
-					if(plugin.world.getBlockAt(ix-x, iy-y, iz-z).getTypeId() == 0){
-						//Air, do nothing
-					}else{
+					if(plugin.world.getBlockAt(ix, iy, iz).getTypeId() != 0){
+						//Not Air
 						Block block = new Block();
 						block.x = (ix-x);
 						block.y = (iy-y);
@@ -165,12 +272,16 @@ public class BuildingManager {
 						block.id = plugin.world.getBlockAt(ix, iy, iz).getTypeId();
 						block.data = plugin.world.getBlockAt(ix, iy, iz).getData();
 						blocks.add(block);
+						
+						if(block.id == 0){
+							plugin.getLogger().info("Air detected...");
+						}
 					}
 				}
 			}
 		}
 		//We now have an ArrayList of blocks, pass this to a config saving method
-		saveToFile(blocks, fileLocation, offsetRadius);
+		saveToFile(blocks, name, offsetRadius);
 	}
 
 	@SuppressWarnings("deprecation")
@@ -178,7 +289,31 @@ public class BuildingManager {
 		plugin.world.getBlockAt(x, y, z).setTypeId(id);
 		plugin.world.getBlockAt(x, y, z).setData(data);
 	}
-
+	
+	public class Structure{
+		public int x_size,z_size;
+		public int x_loc, y_loc, z_loc;
+		public int radius;
+		public String type;
+		
+		public String toString(){
+		    return x_loc + "," + y_loc + "," + z_loc + "," + x_size + "," + z_size + "," + radius + "," + type;
+		}
+		
+		public void setFromString(String s){
+			String[] str = s.split(","); //split s by ','
+			
+			x_loc = Integer.parseInt(str[0]);
+			y_loc = Integer.parseInt(str[1]);
+			z_loc = Integer.parseInt(str[2]);
+			x_size = Integer.parseInt(str[3]);
+			z_size = Integer.parseInt(str[4]);
+			radius = Integer.parseInt(str[5]);
+			type = str[6]; //Get type
+		}
+		
+	}
+	
 	public class Block{
 		public int id;
 		public byte data;
