@@ -3,10 +3,14 @@ package com.estrayer.empire;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.scheduler.BukkitRunnable;
 
 public class BuildingManager {
 	
@@ -31,6 +35,7 @@ public class BuildingManager {
 		
 		configFile = new File(plugin.getDataFolder(), filepath);
 		config = YamlConfiguration.loadConfiguration(configFile);
+		
 		try {
 			config.save(configFile);
 		} catch (IOException e) {
@@ -40,7 +45,7 @@ public class BuildingManager {
 		int originX = config.getInt("origin.x");
 		int originZ = config.getInt("origin.z");
 		int originY = config.getInt("origin.y");
-		int radius = config.getInt("radius");
+		//int radius = config.getInt("radius");
 		
 		ArrayList<Block> blocks = new ArrayList<Block>();
 		
@@ -73,6 +78,31 @@ public class BuildingManager {
 		}
 	}
 	
+	public void buildOverTime(String filepath, Location loc, int speed){
+		
+		ArrayList<Block> blocks = getArrayFromFile(filepath);
+		
+		Collections.shuffle(blocks);
+		
+		plugin.getLogger().info("Built structure at "+blocks.get(0).x + ", " +blocks.get(0).y + ", "+blocks.get(0).z + ", ");
+		
+		int index = 0;
+		for(Block b : blocks){
+			index++;
+			new BukkitRunnable() {
+		        
+	            @Override
+	            public void run() {
+	                placeBlock(b.id, b.data, loc.getBlockX()+b.x, loc.getBlockY()+b.y, loc.getBlockZ()+b.z);
+	                plugin.world.playSound(loc, Sound.BLOCK_STONE_PLACE, 1F, 1F);
+	            }
+	            
+	        }.runTaskLater(this.plugin, speed*index);
+			
+		}
+		
+	}
+	
 	//Warning! Y-value in location is used for radius!
 	public void saveToFile(ArrayList<Block> blocks, String filepath, Location location){
 		
@@ -92,9 +122,11 @@ public class BuildingManager {
 		
 		for(int i=0; i < blocks.size(); i++){
 			String prefix = "blocks.a"+i+".";
+			
 			config.set(prefix+"x", blocks.get(i).x);
 			config.set(prefix+"y", blocks.get(i).y);
 			config.set(prefix+"z", blocks.get(i).z);
+			
 			config.set(prefix+"id", blocks.get(i).id);
 			config.set(prefix+"data", blocks.get(i).data);
 		}
@@ -155,9 +187,8 @@ public class BuildingManager {
 				for(int iz=z; iz <= lgZ; iz++){
 					//plugin.getLogger().info("ix: "+ix + " iy: "+iy+" iz: "+iz);
 					//plugin.getLogger().info("lgx: "+lgX + " lgy: "+lgY+" lgz: "+lgZ);
-					if(plugin.world.getBlockAt(ix-x, iy-y, iz-z).getTypeId() == 0){
-						//Air, do nothing
-					}else{
+					if(plugin.world.getBlockAt(ix, iy, iz).getTypeId() != 0){
+						//Not Air
 						Block block = new Block();
 						block.x = (ix-x);
 						block.y = (iy-y);
@@ -165,6 +196,10 @@ public class BuildingManager {
 						block.id = plugin.world.getBlockAt(ix, iy, iz).getTypeId();
 						block.data = plugin.world.getBlockAt(ix, iy, iz).getData();
 						blocks.add(block);
+						
+						if(block.id == 0){
+							plugin.getLogger().info("Air detected...");
+						}
 					}
 				}
 			}
@@ -178,7 +213,7 @@ public class BuildingManager {
 		plugin.world.getBlockAt(x, y, z).setTypeId(id);
 		plugin.world.getBlockAt(x, y, z).setData(data);
 	}
-
+	
 	public class Block{
 		public int id;
 		public byte data;

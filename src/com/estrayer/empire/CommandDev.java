@@ -14,7 +14,7 @@ public class CommandDev implements CommandExecutor{
 	private Location pos1;
 	private Location pos2;
 	
-	private boolean testCommandEnabled = false;
+	private boolean testCommandEnabled = true;
 	
 	public CommandDev(EmpirePlugin plugin){
 		this.plugin = plugin;
@@ -42,7 +42,7 @@ public class CommandDev implements CommandExecutor{
 							player.sendMessage("Configuration loaded");
 						}
 						if(args[0].equalsIgnoreCase("test") && testCommandEnabled){
-							plugin.buildingManager.buildInstantly(BuildingManager.HOUSE, player.getLocation());
+							plugin.buildingManager.buildOverTime(BuildingManager.HOUSE, player.getLocation(), 1);
 							player.sendMessage("Test executed");
 						}
 						
