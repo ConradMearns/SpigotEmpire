@@ -11,7 +11,7 @@ Spigot 1.10.2, Java 7
 * ~~Refactored documentation and method names~~
 * ~~Asynchronous block placement~~
 * Structures
-  * Structure files test placement
+  * ~~Structure files test placement~~
   * ~~Structure files define boundaries~~
   * ~~Individual structure origins are stored in empire-specific file~~
   * ~~Stop saving air~~
