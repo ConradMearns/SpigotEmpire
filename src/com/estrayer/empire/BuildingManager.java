@@ -135,7 +135,7 @@ public class BuildingManager {
 	}
 
 	/**
-	 * Get a list of structures that an emprie has built
+	 * Get a list of structures that an empire has built
 	 * @param empire - The name of the player who has buildings
 	 * @return an array of Structure metadata
 	 */
@@ -363,7 +363,7 @@ public class BuildingManager {
 		//Create and init a list of blocks
 		ArrayList<Block> blocks = new ArrayList<Block>();
 		
-		//Loop through every block under the blocks kay
+		//Loop through every block under the blocks key
 		for(String key : config.getConfigurationSection("blocks").getKeys(false)){
 			
 			//Define a prefix for the exact block location
