@@ -10,7 +10,19 @@ Spigot 1.10.2, Java 7
 ### Feature Implementation
 * ~~Refactored documentation and method names~~
 * ~~Asynchronous block placement~~
-* Structures
+* Playability
+  * Interactive building placement
+  * Building costs
+  * Item-menu
+   * Display resources
+   * Display building options
+* New player auto-empire
+  * Generate starting buildings
+  * ~~Reference list of all empire-players~~
+  * ~~Empire names are dependent on player name~~
+  * ~~Save empire data to yml~~
+  * ~~Teleport player to new location~~
+* ~~Structures~~
   * ~~Structure files test placement~~
   * ~~Structure files define boundaries~~
   * ~~Individual structure origins are stored in empire-specific file~~
@@ -18,11 +30,5 @@ Spigot 1.10.2, Java 7
   * ~~Structures have origin offset and a radius defined in the file~~
   * ~~Load blocks and data from yml~~
   * ~~Save structures in id:data lists yml~~
-* New player auto-empire
-  * Generate starting buildings
-  * ~~Reference list of all empire-players~~
-  * ~~Empire names are dependent on player name~~
-  * ~~Save empire data to yml~~
-  * ~~Teleport player to new location~~
 * ~~Toggle-able dev mode~~
 * ~~Ensure adventure mode for all joining players~~
