@@ -57,9 +57,15 @@ public class CommandDev implements CommandExecutor{
 							plugin.reloadConfig();
 							player.sendMessage("Configuration loaded");
 						}
-						if(args[0].equalsIgnoreCase("test") && testCommandEnabled){
-							//plugin.buildingManager.build(player, BuildingManager.HOUSE, player.getLocation(), 1);
-							player.sendMessage("Test executed");
+						if(args[0].equalsIgnoreCase("test") && testCommandEnabled){//TODO Test
+							if(player.getMetadata("isBuilding").get(0).asBoolean()){
+								player.setMetadata("isBuilding", new FixedMetadataValue(plugin, false));
+								player.removeMetadata("toBuild", plugin);
+							}else{
+								player.setMetadata("isBuilding", new FixedMetadataValue(plugin, true));
+								player.setMetadata("toBuild", new FixedMetadataValue(plugin, "house"));
+							}
+							player.sendMessage("Test executed "+player.getMetadata("isBuilding").get(0).asBoolean());
 						}
 						
 						//Position information
@@ -71,10 +77,25 @@ public class CommandDev implements CommandExecutor{
 							pos2 = player.getLocation();
 							player.sendMessage("Position 2 set");
 						}
+						
+						//Cancel build
+						if(args[0].equalsIgnoreCase("cancel")){
+							if(player.getMetadata("isBuilding").get(0).asBoolean()){
+								//Player is not in build mode
+								player.setMetadata("isBuilding", new FixedMetadataValue(plugin, false));
+								player.removeMetadata("toBuild", plugin);
+								
+								player.sendMessage("Build mode disabled");
+							}
+						}
 					}else if(args.length == 2){
 						//Builds
 						if(args[0].equalsIgnoreCase("build")){
 							plugin.buildingManager.build(player, args[1], player.getLocation(), 2);
+						}
+						
+						if(args[0].equalsIgnoreCase("request")){
+							plugin.buildingManager.requestBuild(player, args[1]);
 						}
 						
 						if(args[0].equalsIgnoreCase("save")){

@@ -40,6 +40,7 @@ public class EmpirePlugin extends JavaPlugin{
 		
 		//Init Listeners
 		getServer().getPluginManager().registerEvents(new LoginListener(this), this);
+		getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
 		
 		//Init Commands Executors
 		getCommand("dev").setExecutor(new CommandDev(this));

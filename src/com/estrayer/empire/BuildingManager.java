@@ -10,6 +10,7 @@ import org.bukkit.Sound;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
 
 
@@ -67,11 +68,16 @@ public class BuildingManager {
 			
 			// compare each object's xy and r to proposed building
 			for(Structure structure: empireStructures){
-				int dz = proposedStruct.z_loc-structure.z_loc;
-				int dx = proposedStruct.x_loc-structure.x_loc;
+				int dz = proposedStruct.z_loc - structure.z_loc;
+				int dx = proposedStruct.x_loc - structure.x_loc;
 				
-				if(Math.sqrt((dz)^2+(dx)^2)<(proposedStruct.radius+structure.radius)){
-					plugin.getLogger().info(Math.sqrt((dz)^2+(dx)^2)+ " "+(proposedStruct.radius+structure.radius));
+				//((dz^2)+(dx^2)) <= ((proposedStruct.radius+structure.radius)^2)
+				
+				int radii = (proposedStruct.radius+structure.radius);
+				
+				if(((dz*dz)+(dx*dx)) <= (radii*radii)){
+					//plugin.getLogger().info(((dz*dz)+(dx*dx)) +" <= "+ (radii*radii));
+					//plugin.getLogger().info(dx + " " + dz);
 					//if any structure conflicts return false
 					permission = false;
 					break;
@@ -84,6 +90,16 @@ public class BuildingManager {
 			
 		}
 		return permission;
+	}
+	
+	public void requestBuild(Player player, String toBuild){
+		
+		player.setMetadata("isBuilding", new FixedMetadataValue(plugin, true));
+
+		player.setMetadata("toBuild", new FixedMetadataValue(plugin, toBuild));
+		
+		player.sendMessage("You are building a "+toBuild);
+		player.sendMessage("Left click to place, right click to cancel");
 	}
 	
 	/**
@@ -120,11 +136,7 @@ public class BuildingManager {
 		ArrayList<Block> blocks = getStructureBlockMeta(name);
 		
 		//Grab structure metadata and init values
-		Structure struct = getStructureMeta(name);
-		struct.type = name;
-		struct.x_loc = loc.getBlockX();
-		struct.z_loc = loc.getBlockZ();
-		struct.y_loc = loc.getBlockY();
+		Structure struct = getStructureMeta(name, loc);
 		
 		//Shuffle the array so the blocks are added with a random effect
 		Collections.shuffle(blocks);
@@ -327,6 +339,17 @@ public class BuildingManager {
 		
 		return struct;
 	}
+	
+	public Structure getStructureMeta(String name, Location loc){
+		//Grab structure metadata and init values
+		Structure struct = getStructureMeta(name);
+		struct.type = name;
+		struct.x_loc = loc.getBlockX();
+		struct.z_loc = loc.getBlockZ();
+		struct.y_loc = loc.getBlockY();
+		
+		return struct;
+	}
 
 	/**
 	 * After collecting an array of blocks, serialize them into a new file
@@ -448,16 +471,5 @@ public class BuildingManager {
 			type = str[6]; //Get type
 		}
 		
-	}
-	
-	/**
-	 * Simple block class to allow for ArrayLists of blocks
-	 * @author Conrad
-	 *
-	 */
-	public class Block{
-		public int id;
-		public byte data;
-		public int x,y,z;
 	}
 }

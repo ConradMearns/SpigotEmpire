@@ -12,6 +12,8 @@ Spigot 1.10.2, Java 7
 * ~~Asynchronous block placement~~
 * Playability
   * Interactive building placement
+    * TODO - Catch when a player clicks and determine further actions
+    * TODO - Possibly change the update handler so it is continuous?
   * Building costs
   * Item-menu
    * Display resources
