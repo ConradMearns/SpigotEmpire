@@ -31,7 +31,7 @@ public class BuildingManager {
 	private File structuresFile;
 	
 	/**
-	 * This is the sctructures config that stores metadata about where buildings have been placed
+	 * This is the structures config that stores metadata about where buildings have been placed
 	 */
 	public FileConfiguration structures;
 	
@@ -49,6 +49,41 @@ public class BuildingManager {
 		structuresFile = new File(plugin.getDataFolder(), "structures.yml");
 		structures = YamlConfiguration.loadConfiguration(structuresFile);
 		
+	}
+	
+	/**
+	 * Test to see if proposed structure is outside of all other structure's perimeters 
+	 * @param proposedStruct - This is tested against all other structures
+	 */
+	public boolean permissionToBuild(Structure proposedStruct){
+		
+		boolean permission = true;
+		
+		//loop through all players within structure.yml
+		for(String playerName: structures.getConfigurationSection("").getKeys(false)){
+			
+			//loop through each players structures and place the structure strings into an array
+			ArrayList<Structure> empireStructures= getEmpireStructureList(playerName);
+			
+			// compare each object's xy and r to proposed building
+			for(Structure structure: empireStructures){
+				int dz = proposedStruct.z_loc-structure.z_loc;
+				int dx = proposedStruct.x_loc-structure.x_loc;
+				
+				if(Math.sqrt((dz)^2+(dx)^2)<(proposedStruct.radius+structure.radius)){
+					plugin.getLogger().info(Math.sqrt((dz)^2+(dx)^2)+ " "+(proposedStruct.radius+structure.radius));
+					//if any structure conflicts return false
+					permission = false;
+					break;
+				}
+			}
+			// stop the entire process if permission is not given
+			if (permission == false){
+				break;
+			}
+			
+		}
+		return permission;
 	}
 	
 	/**
@@ -94,30 +129,32 @@ public class BuildingManager {
 		//Shuffle the array so the blocks are added with a random effect
 		Collections.shuffle(blocks);
 		
-		//Debug info
-		plugin.getLogger().info("Built structure at "+blocks.get(0).x + ", " +blocks.get(0).y + ", "+blocks.get(0).z + ", ");
-		
-		//Loop through ever block and create an asynchronous task to build block by block
-		int index = 0;
-		for(Block b : blocks){
-			index++;
-			new BukkitRunnable() {
-		        
-	            @Override
-	            public void run() {
-	                placeBlock(b.id, b.data, loc.getBlockX()+b.x, loc.getBlockY()+b.y, loc.getBlockZ()+b.z);
-	                if(sound){
-	                	plugin.world.playSound(loc, Sound.BLOCK_STONE_PLACE, 1F, 1F);
-	                }
-	            }
-	            
-	        }.runTaskLater(this.plugin, speed*index);
-			
+		if (permissionToBuild(struct)) {
+			//Debug info
+			plugin.getLogger().info(
+					"Built structure at " + blocks.get(0).x + ", " + blocks.get(0).y + ", " + blocks.get(0).z + ", ");
+			//Loop through ever block and create an asynchronous task to build block by block
+			int index = 0;
+			for (Block b : blocks) {
+				index++;
+				new BukkitRunnable() {
+
+					@Override
+					public void run() {
+						placeBlock(b.id, b.data, loc.getBlockX() + b.x, loc.getBlockY() + b.y, loc.getBlockZ() + b.z);
+						if (sound) {
+							plugin.world.playSound(loc, Sound.BLOCK_STONE_PLACE, 1F, 1F);
+						}
+					}
+
+				}.runTaskLater(this.plugin, speed * index);
+
+			}
+			//Save the structure
+			saveStructureMeta(struct, p);
+		}else{
+			p.sendMessage("You cannot build structures on other structures, please change your location and try again");
 		}
-		
-		//Save the structure
-		saveStructureMeta(struct, p);
-		
 	}
 	
 	/**
@@ -135,7 +172,7 @@ public class BuildingManager {
 	}
 
 	/**
-	 * Get a list of structures that an emprie has built
+	 * Get a list of structures that an empire has built
 	 * @param empire - The name of the player who has buildings
 	 * @return an array of Structure metadata
 	 */
