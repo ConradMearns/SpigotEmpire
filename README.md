@@ -11,13 +11,13 @@ Spigot 1.10.2, Java 7
 * ~~Refactored documentation and method names~~
 * ~~Asynchronous block placement~~
 * Playability
-  * Interactive building placement
-    * TODO - Catch when a player clicks and determine further actions
-    * TODO - Possibly change the update handler so it is continuous?
-  * Building costs
-  * Item-menu
-   * Display resources
-   * Display building options
+  * ~~Interactive building placement~~
+    * ~~Catch when a player clicks and determine further actions
+    * ~~Refactor comments~~
+  * ~~Building costs~~
+  * ~~Item-menu~~
+   * ~~Display resources~~
+   * ~~Display building options~~
 * New player auto-empire
   * Generate starting buildings
   * ~~Reference list of all empire-players~~
