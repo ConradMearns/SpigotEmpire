@@ -17,11 +17,20 @@ public class PhantomStructureManager {
 	EmpirePlugin plugin;
 	HashMap<String, ArrayList<PhantomBlock>> phantoms;
 	
+	/**
+	 * Constructor, init list of phantoms
+	 * @param plugin
+	 */
 	public PhantomStructureManager(EmpirePlugin plugin){
 		this.plugin = plugin;
 		phantoms = new HashMap<String, ArrayList<PhantomBlock>>();
 	}
 	
+	/**
+	 * Update every phantom block per player
+	 * @param player
+	 * @param structType
+	 */
 	public void updatePhantoms(Player player, String structType){
 		if(phantoms.containsKey(player.getDisplayName())){
 			Location origin = player.getTargetBlock((Set<Material>)null, 30).getLocation();
@@ -45,6 +54,10 @@ public class PhantomStructureManager {
 
 	}
 	
+	/**
+	 * Remove phantoms specific to player
+	 * @param player
+	 */
 	public void deletePhantoms(Player player){
 		if(phantoms.containsKey(player.getDisplayName())){
 			for(PhantomBlock phantom : phantoms.get(player.getDisplayName())){
@@ -55,6 +68,11 @@ public class PhantomStructureManager {
 		
 	}
 	
+	/**
+	 * Generate phantoms in the shape of a structure
+	 * @param player
+	 * @param structName
+	 */
 	public void createPhantomStructure(Player player, String structName){
 		
 		Location origin = player.getTargetBlock((Set<Material>)null, 30).getLocation();
@@ -79,6 +97,10 @@ public class PhantomStructureManager {
 		phantoms.put(player.getDisplayName(), al);
 	}
 	
+	/**
+	 * ArmorStand that is based around the local Block class
+	 * @author Conrad
+	 */
 	private class PhantomBlock extends Block{
 		
 		ArmorStand phantom;

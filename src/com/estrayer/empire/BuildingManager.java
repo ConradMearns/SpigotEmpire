@@ -92,14 +92,83 @@ public class BuildingManager {
 		return permission;
 	}
 	
+	/**
+	 * Set up variables to inform the plugin that a player is trying to build	
+	 * @param player - who is building
+	 * @param toBuild - template to use for a structure
+	 */
 	public void requestBuild(Player player, String toBuild){
 		
-		player.setMetadata("isBuilding", new FixedMetadataValue(plugin, true));
+		//Test if we have resources first
+		if(hasRequiredResources(player, toBuild)){
+			player.setMetadata("isBuilding", new FixedMetadataValue(plugin, true));
+			player.setMetadata("toBuild", new FixedMetadataValue(plugin, toBuild));
 
-		player.setMetadata("toBuild", new FixedMetadataValue(plugin, toBuild));
+			player.sendMessage("You are building a "+toBuild);
+			player.sendMessage("Left click to place, right click to cancel");
+		}else{
+			player.sendMessage("You don't have the resources to build that...");
+		}
 		
-		player.sendMessage("You are building a "+toBuild);
-		player.sendMessage("Left click to place, right click to cancel");
+		
+	}
+	
+	/**
+	 * Asuming a structure has been built, or cancelled, revert variables
+	 * @param player - player to fix
+	 */
+	public void disableBuildMode(Player player){
+		player.setMetadata("isBuilding", new FixedMetadataValue(plugin, false));
+		player.removeMetadata("toBuild", plugin);
+		
+		player.setMetadata("lastBuildAction", new FixedMetadataValue(plugin, 0));
+	}
+	
+	/**
+	 * Method to acquire and return a list of building requirements
+	 */
+	public ArrayList<String> getRequirementList(String struct){
+		Structure s = getStructureMeta(struct);
+		
+		ArrayList<String> list = new ArrayList<String>();
+		
+		if(s.wood > 0){
+			list.add("Wood - "+s.wood);
+		}
+		if(s.food > 0){
+			list.add("Food - "+s.food);
+		}
+		if(s.stone > 0){
+			list.add("Stone- "+s.stone);
+		}
+		if(s.iron > 0){
+			list.add("Iron - "+s.iron);
+		}
+		if(s.gold > 0){
+			list.add("Gold - "+s.gold);
+		}
+		
+		return list;
+	}
+	
+	public boolean hasRequiredResources(Player player, String struct){
+		Structure s = getStructureMeta(struct);
+		
+		boolean allowed = false;
+		
+		int wood = plugin.getPlayerResourceAmount(player.getDisplayName(), "wood");
+		int food = plugin.getPlayerResourceAmount(player.getDisplayName(), "food");
+		int stone = plugin.getPlayerResourceAmount(player.getDisplayName(), "stone");
+		int iron = plugin.getPlayerResourceAmount(player.getDisplayName(), "iron");
+		int gold = plugin.getPlayerResourceAmount(player.getDisplayName(), "gold");
+		
+		plugin.getLogger().info(wood+" "+" "+food+" "+stone+" "+iron+" "+gold);
+		plugin.getLogger().info(s.wood+" "+" "+s.food+" "+s.stone+" "+s.iron+" "+s.gold);
+		
+		allowed = ((wood >= s.wood) && (food >= s.food)
+				&& (stone >= s.stone) && (iron >= s.iron) && (gold >= s.gold));
+		
+		return allowed;
 	}
 	
 	/**
@@ -138,8 +207,12 @@ public class BuildingManager {
 		//Grab structure metadata and init values
 		Structure struct = getStructureMeta(name, loc);
 		
-		//Shuffle the array so the blocks are added with a random effect
-		Collections.shuffle(blocks);
+		//Take resources from player
+		plugin.takePlayerResource(p.getDisplayName(), "wood", struct.wood);
+		plugin.takePlayerResource(p.getDisplayName(), "food", struct.food);
+		plugin.takePlayerResource(p.getDisplayName(), "stone", struct.stone);
+		plugin.takePlayerResource(p.getDisplayName(), "iron", struct.iron);
+		plugin.takePlayerResource(p.getDisplayName(), "gold", struct.gold);
 		
 		if (permissionToBuild(struct)) {
 			//Debug info
@@ -255,10 +328,11 @@ public class BuildingManager {
 		}
 		
 		ArrayList<Block> blocks = new ArrayList<Block>();
+		ArrayList<Block> layer = new ArrayList<Block>();
 		
 		//loop through every value between var and dvar, inclusive;
-		for(int ix=x; ix <= lgX; ix++){
-			for(int iy=y; iy <= lgY; iy++){
+		for(int iy=y; iy <= lgY; iy++){
+			for(int ix=x; ix <= lgX; ix++){
 				for(int iz=z; iz <= lgZ; iz++){
 					//plugin.getLogger().info("ix: "+ix + " iy: "+iy+" iz: "+iz);
 					//plugin.getLogger().info("lgx: "+lgX + " lgy: "+lgY+" lgz: "+lgZ);
@@ -270,7 +344,7 @@ public class BuildingManager {
 						block.z = (iz-z);
 						block.id = plugin.world.getBlockAt(ix, iy, iz).getTypeId();
 						block.data = plugin.world.getBlockAt(ix, iy, iz).getData();
-						blocks.add(block);
+						layer.add(block);
 						
 						if(block.id == 0){
 							plugin.getLogger().info("Air detected...");
@@ -278,6 +352,8 @@ public class BuildingManager {
 					}
 				}
 			}
+			Collections.shuffle(layer);
+			blocks.addAll(layer);
 		}
 		//We now have an ArrayList of blocks, pass this to a config saving method
 		saveStructureBlockMeta(blocks, name, offsetRadius);
@@ -337,6 +413,12 @@ public class BuildingManager {
 		struct.z_size = config.getInt("origin.z");
 		struct.radius = config.getInt("radius");
 		
+		struct.wood = config.getInt("requires.wood");
+		struct.food = config.getInt("requires.food");
+		struct.stone = config.getInt("requires.stone");
+		struct.iron = config.getInt("requires.iron");
+		struct.gold = config.getInt("requires.gold");
+		
 		return struct;
 	}
 	
@@ -368,6 +450,15 @@ public class BuildingManager {
 		
 		configFile = new File(plugin.getDataFolder(), filepath);
 		config = YamlConfiguration.loadConfiguration(configFile);
+		
+		//Save building information
+		config.set("health", 1);
+		config.set("requires.wood", 0);
+		config.set("requires.food", 0);
+		config.set("requires.stone", 0);
+		config.set("requires.iron", 0);
+		config.set("requires.gold", 0);
+		
 		
 		//Save a default value for an origin offset and radius
 		config.set("radius", origin.getBlockY());
@@ -454,9 +545,17 @@ public class BuildingManager {
 		public int x_loc, y_loc, z_loc;
 		public int radius;
 		public String type;
+		public int health;
+		public int wood;
+		public int food;
+		public int stone;
+		public int iron;
+		public int gold;
 		
 		public String toString(){
-		    return x_loc + "," + y_loc + "," + z_loc + "," + x_size + "," + z_size + "," + radius + "," + type;
+		    return x_loc + "," + y_loc + "," + z_loc + "," + x_size + "," + z_size + ","
+		    		+ radius + "," + type + "," + health + "," + wood + "," + food
+		    		 + "," + stone + "," + iron + "," + gold;
 		}
 		
 		public void setFromString(String s){
@@ -469,7 +568,21 @@ public class BuildingManager {
 			z_size = Integer.parseInt(str[4]);
 			radius = Integer.parseInt(str[5]);
 			type = str[6]; //Get type
+			health = Integer.parseInt(str[7]);
+			wood = Integer.parseInt(str[8]);
+			food = Integer.parseInt(str[9]);
+			stone = Integer.parseInt(str[10]);
+			iron = Integer.parseInt(str[11]);
+			gold = Integer.parseInt(str[12]);
 		}
 		
+	}
+
+	public void save() {
+		try {
+			structures.save(structuresFile);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }
