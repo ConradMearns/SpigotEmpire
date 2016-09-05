@@ -1,5 +1,5 @@
-# Project Goals - To Determine
-## Minecraft Empire RT-Strategy Plugin
+# Project Goals
+Minecraft Empire RT-Strategy Plugin
 
 ### Summary
 A Spigot plugin that turns gameplay into a real-time strategy empire building game for multiple players over long durations. See FEATURES.md for a better idea as to what this entails.
@@ -12,7 +12,7 @@ Spigot 1.10.2, Java 7
 * ~~Asynchronous block placement~~
 * Playability
   * ~~Interactive building placement~~
-    * ~~Catch when a player clicks and determine further actions
+    * ~~Catch when a player clicks and determine further actions~~
     * ~~Refactor comments~~
   * ~~Building costs~~
   * ~~Item-menu~~
