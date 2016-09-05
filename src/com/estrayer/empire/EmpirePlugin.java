@@ -25,6 +25,10 @@ public class EmpirePlugin extends JavaPlugin{
 	 */
 	public BuildingManager buildingManager;
 	
+	/** Access to menu related methods
+	 */
+	public MenuManager menuManager;
+	
 	/**
 	 * Called when Spigot starts, initializes global variables
 	 */
@@ -37,10 +41,16 @@ public class EmpirePlugin extends JavaPlugin{
 		loadConfiguration();
 		SERVER_NAME = getConfig().getString("settings.server_name");
 		buildingManager = new BuildingManager(this);
+		menuManager = new MenuManager(this);
 		
 		//Init Listeners
 		getServer().getPluginManager().registerEvents(new LoginListener(this), this);
 		getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
+		getServer().getPluginManager().registerEvents(menuManager, this);
+		
+		//Init runnables
+		/*BukkitTask playerUpdater = */
+		new PlayerUpdater(this).runTaskTimer(this, 20, 20);
 		
 		//Init Commands Executors
 		getCommand("dev").setExecutor(new CommandDev(this));
@@ -53,7 +63,7 @@ public class EmpirePlugin extends JavaPlugin{
 		//Save config file
 		saveConfig();
 		//Save structures
-		//TODO
+		buildingManager.save();
 	}
 	
 	/**Load the settings configuration and add default settings if they don't already exist
@@ -130,8 +140,14 @@ public class EmpirePlugin extends JavaPlugin{
 		getConfig().set(confLoc+".location.x", position.x);
 		getConfig().set(confLoc+".location.y", position.y);
 		
+		//Set spawn point
+		player.setBedSpawnLocation(player.getLocation());
+		
 		//Build Town Center and starting capital
-		//TODO
+		buildingManager.build(player, "town_center", player.getLocation());
+		
+		//Init inventory
+		menuManager.initPlayerInventory(player);
 		
 	}
 	
@@ -200,5 +216,49 @@ public class EmpirePlugin extends JavaPlugin{
 		return currentPosition;
 	}
 	
+	/**
+	 * Get the amount of a particular resource from the player
+	 * @param res - String of the resource to get info about
+	 * @param player - Player that holds the resource
+	 * @return int - amount
+	 */
+	public int getPlayerResourceAmount(String player, String res){
+		if(getConfig().contains("empires."+player)){
+			int amt = getConfig().getInt("empires."+player+".resources."+res);
+			return amt;
+		}else{
+			return 0;
+		}
+		
+	}
+
+	/**
+	 * Set amount of resource from player
+	 * @param player
+	 * @param resource
+	 */
+	public void setPlayerResource(Player player, String resource, int amount){
+		getConfig().set("empires."+player.getDisplayName()+".resources."+resource, amount);
+	}
+	
+	/**
+	 * Add amount of resource from player
+	 * @param player
+	 * @param resource
+	 */
+	public void addPlayerResource(Player player, String resource, int amount){
+		amount += getPlayerResourceAmount(player.getDisplayName(), resource);
+		getConfig().set("empires."+player.getDisplayName()+".resources."+resource, amount);
+	}
+	
+	/**
+	 * Remove amount of resource from player
+	 * @param player
+	 * @param resource
+	 */
+	public void takePlayerResource(String player, String resource, int amount){
+		amount = getPlayerResourceAmount(player, resource) - amount;
+		getConfig().set("empires."+player+".resources."+resource, amount);
+	}
 }
  
