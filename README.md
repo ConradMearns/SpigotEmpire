@@ -10,17 +10,6 @@ Spigot 1.10.2, Java 7
 ### Feature Implementation
 * ~~Refactored documentation and method names~~
 * ~~Asynchronous block placement~~
-<<<<<<< HEAD
-* Playability
-  * ~~Interactive building placement~~
-    * ~~Catch when a player clicks and determine further actions
-    * ~~Refactor comments~~
-  * ~~Building costs~~
-  * ~~Item-menu~~
-   * ~~Display resources~~
-   * ~~Display building options~~
-=======
->>>>>>> refs/remotes/origin/playability
 * New player auto-empire
   * Generate starting buildings
   * ~~Reference list of all empire-players~~
