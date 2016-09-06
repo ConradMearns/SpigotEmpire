@@ -1,4 +1,4 @@
-# Project Goals - To Determine
+# Project Goals
 Minecraft Empire RT-Strategy Plugin
 
 ### Summary
