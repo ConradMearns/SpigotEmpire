@@ -95,6 +95,11 @@ public class EmpirePlugin extends JavaPlugin{
 		getConfig().addDefault("settings.structures.farm", "farm.yml");
 		getConfig().addDefault("settings.structures.mill", "mill.yml");
 		
+		getConfig().addDefault("settings.structures.stone", "stone.yml");
+		getConfig().addDefault("settings.structures.iron", "iron.yml");
+		getConfig().addDefault("settings.structures.gold", "gold.yml");
+		getConfig().addDefault("settings.structures.tree", "tree.yml");
+		
 		//Copy defaults, save
 		getConfig().options().copyDefaults(true);
 		saveConfig();
@@ -104,7 +109,7 @@ public class EmpirePlugin extends JavaPlugin{
 	 * @param player is the new player that we need to give an empire
 	 */
 	public void initializeNewPlayer(Player player) {	
-		//This string defines where information for th eplayer exists
+		//This string defines where information for the player exists
 		String confLoc = "empires."+player.getDisplayName();
 		
 		//Print debug info
