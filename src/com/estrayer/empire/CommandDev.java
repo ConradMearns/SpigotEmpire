@@ -58,14 +58,7 @@ public class CommandDev implements CommandExecutor{
 							player.sendMessage("Configuration loaded");
 						}
 						if(args[0].equalsIgnoreCase("test") && testCommandEnabled){//TODO Test
-							if(player.getMetadata("isBuilding").get(0).asBoolean()){
-								player.setMetadata("isBuilding", new FixedMetadataValue(plugin, false));
-								player.removeMetadata("toBuild", plugin);
-							}else{
-								player.setMetadata("isBuilding", new FixedMetadataValue(plugin, true));
-								player.setMetadata("toBuild", new FixedMetadataValue(plugin, "house"));
-							}
-							player.sendMessage("Test executed "+player.getMetadata("isBuilding").get(0).asBoolean());
+							plugin.initializeNewPlayer(player);
 						}
 						
 						//Position information

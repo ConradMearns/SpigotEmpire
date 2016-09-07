@@ -169,6 +169,28 @@ public class BuildingManager {
 		}
 	}
 	
+	/** Create a player's first structures when they enter the game
+	 * @param the player: so that we can access the players location and build these structures accordingly 
+	 */
+	public void initializeStructures(Player p){
+		Location townCenterLocation = new Location(p.getWorld(), p.getLocation().getX(), p.getLocation().getY(), p.getLocation().getZ()) ;
+		townCenterLocation.setX(p.getLocation().getX()+12);
+		build(p, "town_center",townCenterLocation);
+		
+		plugin.getLogger().info(p.getLocation().toString());
+		plugin.getLogger().info("" + townCenterLocation);
+		
+		Location gardenLocation = new Location(p.getWorld(), p.getLocation().getX(), p.getLocation().getY(), p.getLocation().getZ()) ;
+		gardenLocation.setX(p.getLocation().getX()-12);
+		gardenLocation.setZ(p.getLocation().getZ()+5); 
+		build(p, "garden",gardenLocation);
+		
+		
+		
+	}
+	
+	
+	
 	/**
 	 * Place a block at position x,y,z and initialize it's id and data
 	 * @param id

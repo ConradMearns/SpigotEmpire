@@ -10,6 +10,8 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
 public class EmpirePlugin extends JavaPlugin{
 	
@@ -131,9 +133,39 @@ public class EmpirePlugin extends JavaPlugin{
 		getConfig().set(confLoc+".location.y", position.y);
 		
 		//Build Town Center and starting capital
+		buildingManager.initializeStructures(player);
 		//TODO
 		
+		//Send the Player some introductory Messages
+		String[] welcomeMessage=new String[7];
+		welcomeMessage[0]="Welcome Player, you have inherited the responsibility of leading a"; 
+		welcomeMessage[1]="civilization. Whether it prospers, or falls, is up to you. Be aware that ";
+		welcomeMessage[2]="your civilization is not alone in this world; there are many others who will be";
+		welcomeMessage[3]="gathering the same resources that you need to ensure your survival.";
+		welcomeMessage[4]=" To start out, your two citizens have built a garden, and a towncenter(a birthplace)";
+		welcomeMessage[5]=" of new life and a necessity for the growth and survival of your civilization. ";
+		welcomeMessage[6]="The rest is up to your command. Good Luck ";
+		for(){
+			new BukkitRunnable(){
+				int counter = 0;
+
+				public void run(){
+					if(counter<6){
+						player.sendMessage(welcomeMessage[counter]);
+						counter ++;
+
+					}
+				}
+
+
+			}.runTaskLater(this, 40);
+		}
 	}
+	
+	
+
+	
+		
 	
 	/**Randomly finds a new location that is far enough away from other players
 	 * 
